@@ -5,7 +5,10 @@ import subprocess
 import ctypes
 import msvcrt
 import shutil
+from colorama import init as _colorama_init
+from termcolor import colored
 
+os.system('title py timer')
 # --- CONFIGURATION ---
 MENU_EXECUTABLE = os.path.join("resource", "cmdmenusel.exe")
 MENU_COLOR = "cff2"
@@ -14,8 +17,9 @@ SOUND_FILE = os.path.join("resource", "alarm.mp3")
 SOUND_FILE_PLAYER = os.path.join("resource", "ffplay.exe")
 # ---------------------
 
+_colorama_init()
+
 def clear_screen():
-    """Clears the console screen."""
     os.system('cls' if os.name == 'nt' else 'clear')
 
 def check_dependencies():
@@ -25,8 +29,23 @@ def check_dependencies():
     if missing_files:
         print("❌ ERROR: The following required files are missing in the script's directory:")
         for f in missing_files:
-            print(f"- {f}")
+            try:
+                # print missing files in normal (non-bold) yellow
+                print(colored(f"- {f}", "green", attrs=["bold"]))
+            except Exception:
+                print(f"- {f}")
         print("\nPlease make sure all required files are in the same folder as the script.")
+        print("")
+        print(colored("NOTE: if you are downloading this not from the releases section of the github repo\nthen be sure to download from the releases section of the github repo since github doesn't allow file upload larger than 25 megabytes and ffplay.exe is heavier than that", "yellow", attrs=["bold"]))
+        print("")
+        print("download link: https://github.com/eightynine77/python-timer/releases")
+        print("")
+        print(colored("if you really wish to continue using this script then make sure you add ffplay.exe into this script's \"resource\" folder:", "yellow", attrs=["bold"]))
+        print(colored(os.getcwd() + "\\resource", "cyan", attrs=["bold"]))
+        print("")
+        print("ffplay download link: https://www.ffmpeg.org/download.html")
+        print("")
+        os.system('pause')
         sys.exit(1)
     return True
 
@@ -51,19 +70,19 @@ def countdown(minutes):
 
         if not paused:
             mins, secs = divmod(total_seconds, 60)
-            timer_display = f"⏳ Time Remaining: {mins:02d}:{secs:02d}"
+            timer_display = f"ΓÅ│ Time Remaining: {mins:02d}:{secs:02d}"
             print(timer_display, end="\r")
             time.sleep(1)
             total_seconds -= 1
 
-    print("\n✅ Time's up!                                    ")
+    print("\nΓ£à Time's up!                                    ")
 
 def trigger_alarm_and_notification():
     """
     Plays a sound on loop, shows a PowerShell notification,
     and displays a message box. Stops the sound when the user clicks 'OK'.
     """
-    print("🔔 Triggering alarm and notification...")
+    print("≡ƒöö Triggering alarm and notification...")
 
     # Run PowerShell notification script in the background without a window
     creation_flags = 0x08000000  # CREATE_NO_WINDOW
@@ -221,11 +240,11 @@ def run_at_startup_menu():
                     ['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', ps_cmd],
                     check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
                 )
-                print(f"\n✅ Success! Shortcut '{default_name}' created in Startup.")
+                print(f"\nΓ£à Success! Shortcut '{default_name}' created in Startup.")
             except subprocess.CalledProcessError as e:
-                print(f"\n❌ Failed to create shortcut: {e}")
+                print(f"\nΓ¥î Failed to create shortcut: {e}")
             except Exception as e:
-                print(f"\n❌ Unexpected error: {e}")
+                print(f"\nΓ¥î Unexpected error: {e}")
 
             input("\nPress Enter to continue...")
 
@@ -235,11 +254,11 @@ def run_at_startup_menu():
             if os.path.exists(link_path):
                 try:
                     os.remove(link_path)
-                    print(f"\n✅ Success! '{default_name}' has been removed from startup.")
+                    print(f"\nΓ£à Success! '{default_name}' has been removed from startup.")
                 except Exception as e:
-                    print(f"\n❌ An error occurred while trying to remove the file: {e}")
+                    print(f"\nΓ¥î An error occurred while trying to remove the file: {e}")
             else:
-                print(f"\n⚠️ The file '{default_name}' was not found in the startup folder.")
+                print(f"\nΓÜá∩╕Å The file '{default_name}' was not found in the startup folder.")
             input("\nPress Enter to continue...")
 
         else:
@@ -274,15 +293,15 @@ def manage_reminders():
             shortcut_path = input("Please enter the full path to your Sticky Note shortcut (.lnk) file:\n> ").strip('"')
 
             if not os.path.exists(shortcut_path) or not shortcut_path.endswith('.lnk'):
-                print("\n❌ Error: The file does not exist or is not a valid .lnk shortcut file.")
+                print("\nΓ¥î Error: The file does not exist or is not a valid .lnk shortcut file.")
                 input("\nPress Enter to continue...")
                 continue
 
             try:
                 shutil.copy(shortcut_path, startup_folder)
-                print(f"\n✅ Success! Reminder '{os.path.basename(shortcut_path)}' has been added to startup.")
+                print(f"\nΓ£à Success! Reminder '{os.path.basename(shortcut_path)}' has been added to startup.")
             except Exception as e:
-                print(f"\n❌ An error occurred: {e}")
+                print(f"\nΓ¥î An error occurred: {e}")
             input("\nPress Enter to continue...")
 
         elif choice == 2:  # Disable
@@ -294,11 +313,11 @@ def manage_reminders():
             if os.path.exists(target_path):
                 try:
                     os.remove(target_path)
-                    print(f"\n✅ Success! '{shortcut_name}' has been removed from startup.")
+                    print(f"\nΓ£à Success! '{shortcut_name}' has been removed from startup.")
                 except Exception as e:
-                    print(f"\n❌ An error occurred while trying to remove the file: {e}")
+                    print(f"\nΓ¥î An error occurred while trying to remove the file: {e}")
             else:
-                print(f"\n⚠️ The file '{shortcut_name}' was not found in the startup folder.")
+                print(f"\nΓÜá∩╕Å The file '{shortcut_name}' was not found in the startup folder.")
             input("\nPress Enter to continue...")
 
 def main():
