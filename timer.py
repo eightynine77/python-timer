@@ -1,0 +1,234 @@
+import os
+import sys
+import time
+import subprocess
+import ctypes
+import msvcrt
+import shutil
+
+# --- CONFIGURATION ---
+MENU_EXECUTABLE = "resource\cmdmenusel.exe"
+MENU_COLOR = "cff2"  
+POWERSHELL_SCRIPT = "resource\\notification.ps1"
+SOUND_FILE = "resource\\alarm.mp3"
+SOUND_FILE_PLAYER = "resource\\ffplay.exe"
+# ---------------------
+
+def clear_screen():
+    """Clears the console screen."""
+    os.system('cls')
+
+def check_dependencies():
+    """Checks if all required external files exist before starting."""
+    dependencies = [MENU_EXECUTABLE, POWERSHELL_SCRIPT, SOUND_FILE, SOUND_FILE_PLAYER]
+    missing_files = [f for f in dependencies if not os.path.exists(f)]
+    if missing_files:
+        print("❌ ERROR: The following required files are missing in the script's directory:")
+        for f in missing_files:
+            print(f"- {f}")
+        print("\nPlease make sure all required files are in the same folder as the script.")
+        sys.exit(1)
+    return True
+
+def countdown(minutes):
+    """
+    Runs a countdown for a given number of minutes.
+    Press 'P' to pause/resume.
+    """
+    total_seconds = int(minutes * 60)
+    paused = False
+
+    while total_seconds > 0:
+        if msvcrt.kbhit():
+            key = msvcrt.getch().decode('utf-8').lower()
+            if key == 'p':
+                paused = not paused
+                if paused:
+                    print("\n-- PAUSED -- (Press 'P' again to resume)", end="")
+                else:
+                    # Overwrite the paused message
+                    print("\r-- RESUMED --                                \r", end="")
+
+        if not paused:
+            # \r moves the cursor to the beginning of the line
+            mins, secs = divmod(total_seconds, 60)
+            timer_display = f"⏳ Time Remaining: {mins:02d}:{secs:02d}"
+            print(timer_display, end="\r")
+            time.sleep(1)
+            total_seconds -= 1
+
+    print("\n✅ Time's up!                                    ")
+
+
+def trigger_alarm_and_notification():
+    """
+    Plays a sound on loop, shows a PowerShell notification,
+    and displays a message box. Stops the sound when the user clicks 'OK'.
+    """
+    print("🔔 Triggering alarm and notification...")
+
+    # Run PowerShell notification script in the background without a window
+    creation_flags = 0x08000000 # CREATE_NO_WINDOW
+    subprocess.Popen(
+        ['powershell.exe', '-ExecutionPolicy', 'Bypass', '-File', POWERSHELL_SCRIPT],
+        creationflags=creation_flags
+    )
+
+    # Play sound on loop using ffplay in a background process
+    # -nodisp (no video window), -autoexit (close when done), -loop 0 (infinite)
+    ffplay_process = subprocess.Popen(
+        [SOUND_FILE_PLAYER, '-nodisp', '-autoexit', '-loop', '0', SOUND_FILE],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL
+    )
+
+    # Display a blocking message box. The script will wait here until the user clicks.
+    ctypes.windll.user32.MessageBoxW(
+        0,
+        "Your countdown has finished. Click OK to silence the alarm.",
+        "Time's Up!",
+        0x00000040 # MB_ICONINFORMATION
+    )
+
+    # Once the user clicks OK, terminate the ffplay process to stop the sound
+    ffplay_process.terminate()
+
+def single_timer_mode():
+    """Handles the logic for a single countdown timer."""
+    clear_screen()
+    print("--- Single Timer Mode ---")
+    while True:
+        try:
+            minutes = float(input("Enter countdown duration in minutes: "))
+            if minutes > 0:
+                break
+            else:
+                print("Please enter a positive number.")
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+
+    print("Press 'P' at any time to pause or resume.")        
+    countdown(minutes)
+    trigger_alarm_and_notification()
+
+def multiple_timer_mode():
+    """Handles the logic for a sequence of countdown timers."""
+    clear_screen()
+    print("--- Multiple Timers Mode ---")
+    
+    # Get number of timers
+    while True:
+        try:
+            num_timers = int(input("How many timers do you want to set? "))
+            if num_timers > 0:
+                break
+            else:
+                print("Please enter a number greater than 0.")
+        except ValueError:
+            print("Invalid input. Please enter a whole number.")
+            
+    timers = []
+    # Get duration for each timer
+    for i in range(num_timers):
+        while True:
+            try:
+                minutes = float(input(f"Enter duration for timer #{i+1} in minutes: "))
+                if minutes > 0:
+                    timers.append(minutes)
+                    break
+                else:
+                    print("Please enter a positive number.")
+            except ValueError:
+                print("Invalid input. Please enter a number.")
+    
+    # Run the timers sequentially
+    for i, minutes in enumerate(timers):
+        clear_screen()
+        print(f"--- Running Timer {i+1} of {num_timers} ({minutes} minutes) ---")
+        print("Press 'P' at any time to pause or resume.")
+        countdown(minutes)
+        trigger_alarm_and_notification()
+        
+        if i < len(timers) - 1: # Don't show for the last timer
+            input("\nPress Enter to start the next timer...")
+
+def manage_reminders():
+    """Handles copying or removing a Sticky Note shortcut from the Startup folder."""
+    clear_screen()
+    print("--- Reminder Setup ---")
+    print("This feature copies a Sticky Note shortcut to your Windows Startup folder.")
+    
+    startup_folder = os.path.join(os.environ['APPDATA'], 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
+    
+    # Use cmdmenusel for the sub-menu
+    process = subprocess.run(
+        [MENU_EXECUTABLE, MENU_COLOR, "Enable Startup Reminder", "Disable Startup Reminder"],
+        capture_output=True,
+        text=True
+    )
+    choice = process.returncode
+
+    if choice == 1: # Enable
+        clear_screen()
+        print("--- Enable Startup Reminder ---")
+        shortcut_path = input("Please enter the full path to your Sticky Note shortcut (.lnk) file:\n> ").strip('"')
+        
+        if not os.path.exists(shortcut_path) or not shortcut_path.endswith('.lnk'):
+            print("\n❌ Error: The file does not exist or is not a valid .lnk shortcut file.")
+            return
+
+        try:
+            shutil.copy(shortcut_path, startup_folder)
+            print(f"\n✅ Success! Reminder '{os.path.basename(shortcut_path)}' has been added to startup.")
+        except Exception as e:
+            print(f"\n❌ An error occurred: {e}")
+
+    elif choice == 2: # Disable
+        clear_screen()
+        print("--- Disable Startup Reminder ---")
+        shortcut_name = input("Enter the name of the shortcut file to remove from startup (e.g., 'Sticky Notes.lnk'):\n> ")
+        target_path = os.path.join(startup_folder, shortcut_name)
+
+        if os.path.exists(target_path):
+            try:
+                os.remove(target_path)
+                print(f"\n✅ Success! '{shortcut_name}' has been removed from startup.")
+            except Exception as e:
+                print(f"\n❌ An error occurred while trying to remove the file: {e}")
+        else:
+            print(f"\n⚠️ The file '{shortcut_name}' was not found in the startup folder.")
+
+
+def main():
+    """Main function to display the menu and handle user choices."""
+    check_dependencies()
+    while True:
+        clear_screen()
+        print("====== PYTHON COUNTDOWN TIMER ======")
+        
+        # Use cmdmenusel.exe to display the main menu
+        # The return code corresponds to the selection (1, 2, 3, etc.)
+        # A return code of 0 means the user closed the window or pressed Esc.
+        process = subprocess.run(
+            [MENU_EXECUTABLE, MENU_COLOR, "Single Timer", "Multiple Timers", "Set Reminder", "Exit"],
+            capture_output=True,
+            text=True
+        )
+        choice = process.returncode
+
+        if choice == 1:
+            single_timer_mode()
+        elif choice == 2:
+            multiple_timer_mode()
+        elif choice == 3:
+            manage_reminders()
+        elif choice == 4 or choice == 0: # Exit or Esc
+            print("Exiting. Goodbye!")
+            break
+            
+        if choice in [1, 2, 3]:
+            input("\nPress Enter to return to the main menu...")
+
+
+if __name__ == "__main__":
+    main()
