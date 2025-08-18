@@ -30,7 +30,11 @@ def check_dependencies():
         print("")
         print("")
         print("unfortunately... due to github file size restriction, i can't include ffplay.exe in this project")
-        print("you can download ffplay.exe and place it in this project's \"resource\" folder")
+        print("")
+        print("DON'T download from the github project directly.")
+        print("download this from the github repo's release section:")
+        print("https://github.com/eightynine77/python-timer/releases")
+        print("")
         os.system('pause')
         sys.exit(1)
     return True
@@ -167,7 +171,7 @@ def manage_reminders():
     
     # Use cmdmenusel for the sub-menu
     process = subprocess.run(
-        [MENU_EXECUTABLE, MENU_COLOR, "Enable Startup Reminder", "Disable Startup Reminder"],
+        [MENU_EXECUTABLE, MENU_COLOR, "Enable Startup Reminder", "Disable Startup Reminder", "go back"],
         capture_output=True,
         text=True
     )
@@ -202,6 +206,10 @@ def manage_reminders():
                 print(f"\n❌ An error occurred while trying to remove the file: {e}")
         else:
             print(f"\n⚠️ The file '{shortcut_name}' was not found in the startup folder.")
+
+    elif choice == 3:
+        return
+
 
 
 def main():
