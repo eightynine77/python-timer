@@ -27,6 +27,11 @@ def check_dependencies():
         for f in missing_files:
             print(f"- {f}")
         print("\nPlease make sure all required files are in the same folder as the script.")
+        print("")
+        print("")
+        print("unfortunately... due to github file size restriction, i can't include ffplay.exe in this project")
+        print("you can download ffplay.exe and place it in this project's \"resource\" folder")
+        os.system('pause')
         sys.exit(1)
     return True
 
