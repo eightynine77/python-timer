@@ -8,14 +8,12 @@ import shutil
 from colorama import init as _colorama_init
 from termcolor import colored
 
-os.system('title py timer')
-# --- CONFIGURATION ---
+os.system('title python timer')
 MENU_EXECUTABLE = os.path.join("resource", "cmdmenusel.exe")
 MENU_COLOR = "cff2"
 POWERSHELL_SCRIPT = os.path.join("resource", "notification.ps1")
 SOUND_FILE = os.path.join("resource", "alarm.mp3")
 SOUND_FILE_PLAYER = os.path.join("resource", "ffplay.exe")
-# ---------------------
 
 _colorama_init()
 
@@ -30,7 +28,6 @@ def check_dependencies():
         print("❌ ERROR: The following required files are missing in the script's directory:")
         for f in missing_files:
             try:
-                # print missing files in normal (non-bold) yellow
                 print(colored(f"- {f}", "green", attrs=["bold"]))
             except Exception:
                 print(f"- {f}")
@@ -65,7 +62,6 @@ def countdown(minutes):
                 if paused:
                     print("\n-- PAUSED -- (Press 'P' again to resume)", end="")
                 else:
-                    # Overwrite the paused message
                     print("\r-- RESUMED --                                \r", end="")
 
         if not paused:
@@ -84,29 +80,25 @@ def trigger_alarm_and_notification():
     """
     print("≡ƒöö Triggering alarm and notification...")
 
-    # Run PowerShell notification script in the background without a window
-    creation_flags = 0x08000000  # CREATE_NO_WINDOW
+    creation_flags = 0x08000000  
     subprocess.Popen(
         ['powershell.exe', '-ExecutionPolicy', 'Bypass', '-File', POWERSHELL_SCRIPT],
         creationflags=creation_flags
     )
 
-    # Play sound on loop using ffplay in a background process
     ffplay_process = subprocess.Popen(
         [SOUND_FILE_PLAYER, '-nodisp', '-autoexit', '-loop', '0', SOUND_FILE],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL
     )
 
-    # Display a blocking message box. The script will wait here until the user clicks.
-    ctypes.windll.user32.MessageBoxW(
-        0,
-        "Your countdown has finished. Click OK to silence the alarm.",
-        "Time's Up!",
-        0x00000040  # MB_ICONINFORMATION
-    )
+ctypes.windll.user32.MessageBoxW(
+    ctypes.windll.user32.GetForegroundWindow(),
+    "Your countdown has finished. Click OK to silence the alarm.",
+    "Time's Up!",
+    0x00000040  
+)
 
-    # Once the user clicks OK, terminate the ffplay process to stop the sound
     try:
         ffplay_process.terminate()
     except Exception:
@@ -136,7 +128,6 @@ def multiple_timer_mode():
     clear_screen()
     print("--- Multiple Timers Mode ---")
 
-    # Get number of timers
     while True:
         try:
             num_timers = int(input("How many timers do you want to set? "))
@@ -148,7 +139,6 @@ def multiple_timer_mode():
             print("Invalid input. Please enter a whole number.")
 
     timers = []
-    # Get duration for each timer
     for i in range(num_timers):
         while True:
             try:
@@ -161,7 +151,6 @@ def multiple_timer_mode():
             except ValueError:
                 print("Invalid input. Please enter a number.")
 
-    # Run the timers sequentially
     for i, minutes in enumerate(timers):
         clear_screen()
         print(f"--- Running Timer {i+1} of {num_timers} ({minutes} minutes) ---")
@@ -169,13 +158,11 @@ def multiple_timer_mode():
         countdown(minutes)
         trigger_alarm_and_notification()
 
-        if i < len(timers) - 1:  # Don't show for the last timer
+        if i < len(timers) - 1:  
             input("\nPress Enter to start the next timer...")
 
-    # all timers finished
     input("\nAll timers finished. Press Enter to return to the main menu...")
 
-# Shared startup folder path
 STARTUP_FOLDER = os.path.join(
     os.environ.get('APPDATA', r''),
     'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup'
@@ -191,10 +178,8 @@ def run_at_startup_menu():
     points to the running Python interpreter with this script as an argument.
     Uses a default shortcut name (script name + .lnk) without prompting the user.
     """
-    # Ensure startup folder exists
-    os.makedirs(STARTUP_FOLDER, exist_ok=True)
 
-    # paths used to create shortcut
+    os.makedirs(STARTUP_FOLDER, exist_ok=True)
     script_path = os.path.abspath(sys.argv[0])
     script_dir = os.path.dirname(script_path)
     default_name = os.path.splitext(os.path.basename(script_path))[0] + ".lnk"
@@ -210,25 +195,21 @@ def run_at_startup_menu():
         )
         choice = process.returncode
 
-        # treat 0 (Esc/close) like "Go back"
         if choice == 0 or choice == 3:
             return
 
-        if choice == 1:  # Enable (create or overwrite)
+        if choice == 1:  
             clear_screen()
             print("--- Enable Run at Startup ---")
             print("")
             print("loading...")
             try:
-                # Remove existing shortcut if present to ensure fresh creation
                 if os.path.exists(link_path):
                     try:
                         os.remove(link_path)
                     except Exception:
-                        # ignore failures here and attempt creation anyway
                         pass
 
-                # Build PowerShell command to create the .lnk via WScript.Shell
                 ps_cmd = (
                     f"$WshShell = New-Object -ComObject WScript.Shell; "
                     f"$Shortcut = $WshShell.CreateShortcut('{_ps_single_quote_escape(link_path)}'); "
@@ -248,7 +229,7 @@ def run_at_startup_menu():
 
             input("\nPress Enter to continue...")
 
-        elif choice == 2:  # Disable (remove default link)
+        elif choice == 2:  
             clear_screen()
             print("--- Disable Run at Startup ---")
             if os.path.exists(link_path):
@@ -262,7 +243,6 @@ def run_at_startup_menu():
             input("\nPress Enter to continue...")
 
         else:
-            # unknown return code: treat as go back
             return
 
 def manage_reminders():
@@ -272,7 +252,6 @@ def manage_reminders():
         print("--- Reminder Setup ---")
         print("This feature copies a Sticky Note shortcut to your Windows Startup folder.")
 
-        # Use cmdmenusel for the sub-menu
         process = subprocess.run(
             [MENU_EXECUTABLE, MENU_COLOR, "Enable Startup Reminder", "Disable Startup Reminder", "go back"],
             capture_output=True,
@@ -280,14 +259,12 @@ def manage_reminders():
         )
         choice = process.returncode
 
-        # treat 0 (Esc/close) like "Go back"
         if choice == 0 or choice == 3:
-            # Return immediately to main menu without extra pause
             return
 
-        startup_folder = STARTUP_FOLDER  # same startup path
+        startup_folder = STARTUP_FOLDER 
 
-        if choice == 1:  # Enable
+        if choice == 1:  
             clear_screen()
             print("--- Enable Startup Reminder ---")
             shortcut_path = input("Please enter the full path to your Sticky Note shortcut (.lnk) file:\n> ").strip('"')
@@ -304,7 +281,7 @@ def manage_reminders():
                 print(f"\nΓ¥î An error occurred: {e}")
             input("\nPress Enter to continue...")
 
-        elif choice == 2:  # Disable
+        elif choice == 2:  
             clear_screen()
             print("--- Disable Startup Reminder ---")
             shortcut_name = input("Enter the name of the shortcut file to remove from startup (e.g., 'Sticky Notes.lnk'):\n> ")
@@ -327,7 +304,6 @@ def main():
         clear_screen()
         print("====== PYTHON COUNTDOWN TIMER ======")
 
-        # New main menu order: Single, Multiple, Run at Startup, Set Reminder, Exit
         process = subprocess.run(
             [MENU_EXECUTABLE, MENU_COLOR,
              "Single Timer", "Multiple Timers", "Run at Startup", "Set Reminder", "Exit"],
@@ -336,7 +312,6 @@ def main():
         )
         choice = process.returncode
 
-        # treat 0 (Esc/close) as exit
         if choice == 0 or choice == 5:
             print("Exiting. Goodbye!")
             break
@@ -350,7 +325,6 @@ def main():
         elif choice == 4:
             manage_reminders()
         else:
-            # unknown code - just loop back
             continue
 
 if __name__ == "__main__":
