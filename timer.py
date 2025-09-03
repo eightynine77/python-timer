@@ -25,7 +25,7 @@ def check_dependencies():
     dependencies = [MENU_EXECUTABLE, POWERSHELL_SCRIPT, SOUND_FILE, SOUND_FILE_PLAYER]
     missing_files = [f for f in dependencies if not os.path.exists(f)]
     if missing_files:
-        print("❌ ERROR: The following required files are missing in the script's directory:")
+        print("[ERROR] The following required files are missing in the script's directory:")
         for f in missing_files:
             try:
                 print(colored(f"- {f}", "green", attrs=["bold"]))
@@ -66,19 +66,19 @@ def countdown(minutes):
 
         if not paused:
             mins, secs = divmod(total_seconds, 60)
-            timer_display = f"ΓÅ│ Time Remaining: {mins:02d}:{secs:02d}"
+            timer_display = f"Time Remaining: {mins:02d}:{secs:02d}"
             print(timer_display, end="\r")
             time.sleep(1)
             total_seconds -= 1
 
-    print("\nΓ£à Time's up!                                    ")
+    print("\n Time's up!                                    ")
 
 def trigger_alarm_and_notification():
     """
     Plays a sound on loop, shows a PowerShell notification,
     and displays a message box. Stops the sound when the user clicks 'OK'.
     """
-    print("≡ƒöö Triggering alarm and notification...")
+    print("Triggering alarm and notification...")
 
     creation_flags = 0x08000000  
     subprocess.Popen(
@@ -221,11 +221,11 @@ def run_at_startup_menu():
                     ['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', ps_cmd],
                     check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
                 )
-                print(f"\nΓ£à Success! Shortcut '{default_name}' created in Startup.")
+                print(f"\nsuccess! Shortcut '{default_name}' created in Startup.")
             except subprocess.CalledProcessError as e:
-                print(f"\nΓ¥î Failed to create shortcut: {e}")
+                print(f"\n[ERROR] Failed to create shortcut: {e}")
             except Exception as e:
-                print(f"\nΓ¥î Unexpected error: {e}")
+                print(f"\n[ERROR] Unexpected error: {e}")
 
             input("\nPress Enter to continue...")
 
@@ -235,11 +235,11 @@ def run_at_startup_menu():
             if os.path.exists(link_path):
                 try:
                     os.remove(link_path)
-                    print(f"\nΓ£à Success! '{default_name}' has been removed from startup.")
+                    print(f"\nSuccess! '{default_name}' has been removed from startup.")
                 except Exception as e:
-                    print(f"\nΓ¥î An error occurred while trying to remove the file: {e}")
+                    print(f"\n[ERROR] An error occurred while trying to remove the file: {e}")
             else:
-                print(f"\nΓÜá∩╕Å The file '{default_name}' was not found in the startup folder.")
+                print(f"\n[INFORMATION] The file '{default_name}' was not found in the startup folder.")
             input("\nPress Enter to continue...")
 
         else:
@@ -270,15 +270,15 @@ def manage_reminders():
             shortcut_path = input("Please enter the full path to your Sticky Note shortcut (.lnk) file:\n> ").strip('"')
 
             if not os.path.exists(shortcut_path) or not shortcut_path.endswith('.lnk'):
-                print("\nΓ¥î Error: The file does not exist or is not a valid .lnk shortcut file.")
+                print("\n[ERROR] The file does not exist or is not a valid .lnk shortcut file.")
                 input("\nPress Enter to continue...")
                 continue
 
             try:
                 shutil.copy(shortcut_path, startup_folder)
-                print(f"\nΓ£à Success! Reminder '{os.path.basename(shortcut_path)}' has been added to startup.")
+                print(f"\nSuccess! Reminder '{os.path.basename(shortcut_path)}' has been added to startup.")
             except Exception as e:
-                print(f"\nΓ¥î An error occurred: {e}")
+                print(f"\n[ERROR] An error occurred: {e}")
             input("\nPress Enter to continue...")
 
         elif choice == 2:  
@@ -290,11 +290,11 @@ def manage_reminders():
             if os.path.exists(target_path):
                 try:
                     os.remove(target_path)
-                    print(f"\nΓ£à Success! '{shortcut_name}' has been removed from startup.")
+                    print(f"\nSuccess! '{shortcut_name}' has been removed from startup.")
                 except Exception as e:
-                    print(f"\nΓ¥î An error occurred while trying to remove the file: {e}")
+                    print(f"\n[ERROR] An error occurred while trying to remove the file: {e}")
             else:
-                print(f"\nΓÜá∩╕Å The file '{shortcut_name}' was not found in the startup folder.")
+                print(f"\n[INFORMATION] The file '{shortcut_name}' was not found in the startup folder.")
             input("\nPress Enter to continue...")
 
 def main():
