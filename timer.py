@@ -91,13 +91,13 @@ def trigger_alarm_and_notification():
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL
     )
-
-ctypes.windll.user32.MessageBoxW(
-    ctypes.windll.user32.GetForegroundWindow(),
-    "Your countdown has finished. Click OK to silence the alarm.",
-    "Time's Up!",
-    0x00000040  
-)
+    
+    ctypes.windll.user32.MessageBoxW(
+        ctypes.windll.user32.GetForegroundWindow(),
+        "Your countdown has finished. Click OK to silence the alarm.",
+        "Time's Up!",
+        0x00000040  
+    )
 
     try:
         ffplay_process.terminate()
