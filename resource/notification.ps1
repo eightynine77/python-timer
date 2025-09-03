@@ -4,6 +4,7 @@ Add-Type -AssemblyName System.Windows.Forms;
     $notifyIcon.Icon = [System.Drawing.SystemIcons]::Information; 
     $notifyIcon.Text = 'Time counter'; 
     $notifyIcon.Visible = $true; 
-    $notifyIcon.ShowBalloonTip(5000, 'your time is up!', 'fucking stop playing now!!!', [System.Windows.Forms.ToolTipIcon]::Info); 
+    $notifyIcon.ShowBalloonTip(5000, 'python timer', 'your time is up', [System.Windows.Forms.ToolTipIcon]::Info); 
     Start-Sleep -Seconds 5; 
+
     $notifyIcon.Dispose();
