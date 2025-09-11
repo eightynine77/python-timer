@@ -91,12 +91,14 @@ def trigger_alarm_and_notification():
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL
     )
-    
+
+    MB_ICONINFORMATION = 0x00000040
+    MB_TOPMOST = 0x00040000
     ctypes.windll.user32.MessageBoxW(
         ctypes.windll.user32.GetForegroundWindow(),
         "Your countdown has finished. Click OK to silence the alarm.",
         "Time's Up!",
-        0x00000040  
+        MB_ICONINFORMATION | MB_TOPMOST  
     )
 
     try:
